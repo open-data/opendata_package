@@ -1,0 +1,112 @@
+<?php
+
+/**
+ * @file
+ * Module file for Open Data Canada module.
+ *
+ * This module defines a Drupal content node that mirrors the
+ * packages in CKAN. Instead of querying CKAN directly, basic package
+ * information is stored in the table od_canada.
+ */
+
+/**
+ * Implements hook_menu().
+ *
+ * 
+ */
+function od_canada_menu() {
+  $items['dataset/%'] = array(
+    'page callback' => '_od_canada_page',
+    'access arguments' => array('access content'),
+    'title' => 'Dataset',
+    'page arguments' => array(1),
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_node_info().
+ *
+ * We use hook_node_info() to define our node content type.
+ */
+function od_canada_node_info() {
+  // We define the node type as an associative array.
+  return array(
+    'od_canada' => array(
+      'name' => t('Canada Open Data Node Type'),
+      // 'base' tells Drupal the base string for hook functions.
+      // This is often the module name; if base is set to 'mymodule',
+      // Drupal would call mymodule_insert() or similar for node
+      // hooks. In our case, the base is 'od_canada'.
+      'base' => 'od_canada',
+      'description' => t('This node links to a CKAN Dataset.'),
+      'title_label' => t('Package name'),
+      // We'll set the 'locked' attribute to TRUE, so users won't be
+      // able to change the machine name of our content type.
+      'locked' => TRUE,
+    ),
+  );
+}
+
+/**
+ * Implement hook_form().
+ *
+ * Drupal needs for us to provide a form that lets the user
+ * add content. This is the form that the user will see if
+ * they go to node/add/od_canada.
+ *
+ * You can get fancy with this form, or you can just punt
+ * and return the default form that node_content will provide.
+ */
+function od_canada_form($node, $form_state) {
+  /** This should be changed so that CKAN metadata is not alterable  **/
+  return node_content_form($node, $form_state);
+}
+
+function _od_canada_page($arg1 = NULL) {
+    
+  /* Check the package table to determine if the requested package exists.
+   * If it does not, then return an error message. If it does exist then 
+   * determine if a node has been previously associated with the package.
+   * If one has, then return the node.
+   * 
+   * If no node has been associated with the package, then create the node, and
+   * associate it with the package.
+   */
+   
+    if ( is_null($arg1) ) {
+        // We will just show a standard "access denied" page in this case.
+        drupal_access_denied();
+        return;  // We actually don't get here.
+    }
+   $renderable_array = array();
+   
+   // Retrieve info from package. If it exists, only one record will be returned
+   $result = db_select('od_canada', 'c')
+    ->fields('c')
+    ->condition('pkg_name', $arg1, '=')
+    ->execute();
+    
+    if ($result->rowCount() > 0) { // package exists
+        $row = $result->fetchAssoc(); 
+        $nid = $row['pkg_node_id'];
+        drupal_set_message('Nid is ' + $nid);
+        if ($nid == 0) { // need to create a node
+            $node = node_load($nid);
+        } else { // node already exists
+            $node = new stdClass();
+            $node->type = "od_canada";
+            $node->title = $record['pkg_name'];
+            node_object_prepare($node);
+            node_save($node);
+        }
+        // Generate the output for the node.
+
+       $renderable_array['node_list'][]= node_view($node);
+    } else { // package does not exist - just return an error
+       drupal_set_message(t('This dataset does not exist.'), 'error');
+    };
+
+    return $renderable_array;
+
+}

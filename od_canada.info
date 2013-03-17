@@ -1,0 +1,6 @@
+name = Open Data Canada CKAN Packages
+description = A custom content type that links to the CKAN packages hosted by data.gc.ca.
+package = Open Data
+core = 7.x
+; dependencies[] = image
+files[] = od_canada.module
