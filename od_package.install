@@ -10,10 +10,10 @@
  * Implements hook_schema().
  */
 
-function od_canada_schema() {
+function od_package_schema() {
   $schema = array();
 
-  $schema['od_canada'] = array(
+  $schema['od_package'] = array(
     'description' => 'The base table for CKAN Packages maintained by CKAN.',
     'fields' => array(
       'pkg_id' => array(
@@ -58,8 +58,14 @@ function od_canada_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'pkg_url' => array(
-        'description' => 'CKAN Package URL.',
+      'pkg_url_en' => array(
+        'description' => 'CKAN Package English URL.',
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'pkg_url_fr' => array(
+        'description' => 'CKAN Package French URL.',
         'type' => 'varchar',
         'not null' => TRUE,
         'default' => '',

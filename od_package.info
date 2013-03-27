@@ -3,4 +3,5 @@ description = A custom content type that links to the CKAN packages hosted by da
 package = Open Data
 core = 7.x
 ; dependencies[] = image
-files[] = od_canada.module
+files[] = od_package.install
+files[] = od_package.module

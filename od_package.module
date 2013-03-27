@@ -91,12 +91,12 @@ function _od_canada_page($arg1 = NULL) {
         $row = $result->fetchAssoc(); 
         $nid = $row['pkg_node_id'];
         drupal_set_message('Nid is ' + $nid);
-        if ($nid == 0) { // need to create a node
+        if ($nid == 0) { // node already exists - use it
             $node = node_load($nid);
-        } else { // node already exists
+        } else { // need to create a node
             $node = new stdClass();
             $node->type = "od_canada";
-            $node->title = $record['pkg_name'];
+            $node->title = $row['pkg_name'];
             node_object_prepare($node);
             node_save($node);
         }
