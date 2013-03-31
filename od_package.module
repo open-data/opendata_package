@@ -6,7 +6,7 @@
  *
  * This module defines a Drupal content node that mirrors the
  * packages in CKAN. Instead of querying CKAN directly, basic package
- * information is stored in the table od_canada.
+ * information is stored in the table od_package.
  */
 
 /**
@@ -14,9 +14,9 @@
  *
  * 
  */
-function od_canada_menu() {
+function od_package_menu() {
   $items['dataset/%'] = array(
-    'page callback' => '_od_canada_page',
+    'page callback' => '_od_package_page',
     'access arguments' => array('access content'),
     'title' => 'Dataset',
     'page arguments' => array(1),
@@ -29,16 +29,16 @@ function od_canada_menu() {
  *
  * We use hook_node_info() to define our node content type.
  */
-function od_canada_node_info() {
+function od_package_node_info() {
   // We define the node type as an associative array.
   return array(
-    'od_canada' => array(
+    'od_package' => array(
       'name' => t('Canada Open Data Node Type'),
       // 'base' tells Drupal the base string for hook functions.
       // This is often the module name; if base is set to 'mymodule',
       // Drupal would call mymodule_insert() or similar for node
-      // hooks. In our case, the base is 'od_canada'.
-      'base' => 'od_canada',
+      // hooks. In our case, the base is 'od_package'.
+      'base' => 'od_package',
       'description' => t('This node links to a CKAN Dataset.'),
       'title_label' => t('Package name'),
       // We'll set the 'locked' attribute to TRUE, so users won't be
@@ -53,18 +53,21 @@ function od_canada_node_info() {
  *
  * Drupal needs for us to provide a form that lets the user
  * add content. This is the form that the user will see if
- * they go to node/add/od_canada.
+ * they go to node/add/od_package.
  *
  * You can get fancy with this form, or you can just punt
  * and return the default form that node_content will provide.
  */
-function od_canada_form($node, $form_state) {
-  /** This should be changed so that CKAN metadata is not alterable  **/
+function od_package_form($node, $form_state) {
+  /** @TODO
+   * This should be changed to reuse the _od_package_page() frunciton  
+   **/
   return node_content_form($node, $form_state);
 }
 
-function _od_canada_page($arg1 = NULL) {
-    
+function _od_package_page($arg1 = NULL) {
+  global $user;
+  
   /* Check the package table to determine if the requested package exists.
    * If it does not, then return an error message. If it does exist then 
    * determine if a node has been previously associated with the package.
@@ -74,7 +77,7 @@ function _od_canada_page($arg1 = NULL) {
    * associate it with the package.
    */
    
-    if ( is_null($arg1) ) {
+   if ( is_null($arg1) ) {
         // We will just show a standard "access denied" page in this case.
         drupal_access_denied();
         return;  // We actually don't get here.
@@ -82,29 +85,49 @@ function _od_canada_page($arg1 = NULL) {
    $renderable_array = array();
    
    // Retrieve info from package. If it exists, only one record will be returned
-   $result = db_select('od_canada', 'c')
-    ->fields('c')
+   $result = db_select('od_package', 'c')
+    ->fields('c', array('pkg_node_id', 'pkg_id', 'pkg_name', 'pkg_title_en', 
+        'pkg_title_fr', 'pkg_description_en', 'pkg_description_fr'))
     ->condition('pkg_name', $arg1, '=')
     ->execute();
     
-    if ($result->rowCount() > 0) { // package exists
-        $row = $result->fetchAssoc(); 
-        $nid = $row['pkg_node_id'];
-        drupal_set_message('Nid is ' + $nid);
-        if ($nid == 0) { // node already exists - use it
+    if ($result->rowCount() == 1) { // package exists
+        $record = $result->fetchAssoc();
+        $nid = $record['pkg_node_id'];
+        $node = NULL;
+        if ($nid != 0) { // node already exists - use it
             $node = node_load($nid);
         } else { // need to create a node
+ 
             $node = new stdClass();
-            $node->type = "od_canada";
-            $node->title = $row['pkg_name'];
+            $node->type = 'od_package';
+            $node->title = $record['pkg_title_en'];
             node_object_prepare($node);
+            $node->language = LANGUAGE_NONE; // Or e.g. 'en' if locale is enabled
+            $node->uid = $user->uid;
+            $node->comment = 2;
+            $node = node_submit($node);
             node_save($node);
+            
+            // Save the node ID to OD_PACKAGE
+            $record['pkg_node_id'] = $node->nid;
+            $count = db_update('od_package')
+              ->fields($record)
+              ->condition('pkg_name', $record['pkg_name'])
+              ->execute();
         }
         // Generate the output for the node.
-
+        
+        /**
+         * @TODO The rendering of the page needs more work.
+         */
        $renderable_array['node_list'][]= node_view($node);
+       $renderable_array['description'] = array(
+         '#type' => 'markup',
+         '#markup' => $record['pkg_description_en'] 
+       );
     } else { // package does not exist - just return an error
-       drupal_set_message(t('This dataset does not exist.'), 'error');
+       drupal_set_message(t('This dataset does not exist.'), 'warning');
     };
 
     return $renderable_array;
