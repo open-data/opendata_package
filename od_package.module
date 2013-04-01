@@ -54,19 +54,14 @@ function od_package_node_info() {
  * Drupal needs for us to provide a form that lets the user
  * add content. This is the form that the user will see if
  * they go to node/add/od_package.
- *
- * You can get fancy with this form, or you can just punt
- * and return the default form that node_content will provide.
  */
 function od_package_form($node, $form_state) {
-  /** @TODO
-   * This should be changed to reuse the _od_package_page() frunciton  
-   **/
   return node_content_form($node, $form_state);
 }
 
 function _od_package_page($arg1 = NULL) {
   global $user;
+  global $language;
   
   /* Check the package table to determine if the requested package exists.
    * If it does not, then return an error message. If it does exist then 
@@ -101,11 +96,14 @@ function _od_package_page($arg1 = NULL) {
  
             $node = new stdClass();
             $node->type = 'od_package';
+            
+            // Should use a translateable field as a title
             $node->title = $record['pkg_title_en'];
             node_object_prepare($node);
-            $node->language = LANGUAGE_NONE; // Or e.g. 'en' if locale is enabled
+            $node->language = $language->language; 
             $node->uid = $user->uid;
             $node->comment = 2;
+            $node->path['alias'] = 'dataset/' . $record['pkg_name'];
             $node = node_submit($node);
             node_save($node);
             
@@ -113,23 +111,28 @@ function _od_package_page($arg1 = NULL) {
             $record['pkg_node_id'] = $node->nid;
             $count = db_update('od_package')
               ->fields($record)
-              ->condition('pkg_name', $record['pkg_name'])
+              ->condition('pkg_name', $record['pkg_name'], '=')
               ->execute();
         }
         // Generate the output for the node.
-        
-        /**
-         * @TODO The rendering of the page needs more work.
-         */
-       $renderable_array['node_list'][]= node_view($node);
+       $renderable_array['node_list'][] = node_view($node);
+       $display_desc = '';
+       $display_title = '';
+       if ($language->language == 'en') {
+         $display_desc = $record['pkg_description_en'];
+         $display_title = $record['pkg_title_en'];
+       } else {
+         $display_desc = $record['pkg_description_fr'];
+         $display_title = $record['pkg_title_fr'];
+       }
        $renderable_array['description'] = array(
          '#type' => 'markup',
-         '#markup' => $record['pkg_description_en'] 
+         '#markup' => '<div>' . $display_desc . '</div>',
        );
+       
     } else { // package does not exist - just return an error
-       drupal_set_message(t('This dataset does not exist.'), 'warning');
+      drupal_set_message(t('This dataset does not exist.'), 'warning');
     };
-
-    return $renderable_array;
+    return $renderable_array;       
 
 }
