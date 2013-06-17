@@ -123,7 +123,7 @@ function _opendata_package_page($arg1 = NULL) {
             $node->title = utf8_encode(substr($record['pkg_title_en'], 0, 254));
             $node->opendata_package_title['en'][0]['value'] = mb_convert_encoding(substr($record['pkg_title_en'], 0, 254), 'UTF-8');
             node_object_prepare($node);
-            $node->language = $language->language; 
+            $node->language = 'en'; 
             $node->uid = $user->uid;
             $node->comment = 2;
             $node->path['alias'] = 'dataset/' . mb_convert_encoding(substr($record['pkg_id'], 0, 254), 'UTF-8');
@@ -155,7 +155,11 @@ function _opendata_package_page($arg1 = NULL) {
 
         }
         // Go to the new or existing view of the node
-        drupal_goto($GLOBALS['base_url'] . '/dataset/' . $record['pkg_name']);
+        if ($language->language == 'fr') {
+          drupal_goto('node/' . $nodefr->nid);
+        } else {
+          drupal_goto('node/' . $node->nid);
+        }
 
     } else { // package does not exist - just return an error
       drupal_set_message(t('This dataset does not exist.'), 'warning');

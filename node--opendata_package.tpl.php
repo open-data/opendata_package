@@ -20,7 +20,7 @@ global $language;
   $result = db_select('opendata_package', 'c')
   ->fields('c', array('pkg_node_id', 'pkg_id', 'pkg_name', 'pkg_title_en', 
       'pkg_title_fr', 'pkg_description_en', 'pkg_description_fr'))
-  ->condition('pkg_node_id', $node->nid, '=')
+  ->condition('pkg_node_id', $node->tnid, '=')
   ->execute();
   if ($result->rowCount() == 1) {
     $record = $result->fetchAssoc();
