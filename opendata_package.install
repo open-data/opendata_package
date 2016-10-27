@@ -13,6 +13,7 @@ function opendata_package_schema() {
       'pkg_id' => array(
         'description' => 'CKAN Package ID.',
         'type' => 'varchar',
+        'length' => 50,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -25,30 +26,35 @@ function opendata_package_schema() {
       'pkg_name' => array(
         'description' => 'CKAN Package Name.',
         'type' => 'varchar',
+        'length' => 100,
         'not null' => TRUE,
         'default' => '',
       ),
       'pkg_title_en' => array(
         'description' => 'CKAN Package English Title.',
         'type' => 'varchar',
+        'length' => 100,
         'not null' => TRUE,
         'default' => '',
       ),
       'pkg_title_fr' => array(
         'description' => 'CKAN Package French Title.',
         'type' => 'varchar',
+        'length' => 100,
         'not null' => TRUE,
         'default' => '',
       ),
       'pkg_description_en' => array(
         'description' => 'CKAN Package English Description.',
         'type' => 'varchar',
+        'length' => 5000,
         'not null' => TRUE,
         'default' => '',
       ),
       'pkg_description_fr' => array(
         'description' => 'CKAN Package French Description.',
         'type' => 'varchar',
+        'length' => 5000,
         'not null' => TRUE,
         'default' => '',
       ),
